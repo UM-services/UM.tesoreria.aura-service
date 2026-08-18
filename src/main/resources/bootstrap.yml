@@ -1,0 +1,45 @@
+app:
+  port: ${APP_PORT:8098}
+  logging: DEBUG
+  name: tesoreria-aura-service
+  consul:
+    host: consul-service
+    port: 8500
+  swagger:
+    username: ${APP_SWAGGER_USERNAME:tesoreria}
+    password: ${APP_SWAGGER_PASSWORD:tesoreria}
+
+server:
+  port: ${app.port}
+
+spring:
+  application:
+    name: ${app.name}
+  cloud:
+    consul:
+      host: ${app.consul.host}
+      port: ${app.consul.port}
+      discovery:
+        prefer-ip-address: true
+        tags: tesoreria,aura
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+logging:
+  level:
+    um.tesoreria.aura: ${app.logging}
+    web: ${app.logging}
+    org:
+      springframework.cloud.config: ${app.logging}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,scheduledtasks,env
+  endpoint:
+    health:
+      show-details: always
