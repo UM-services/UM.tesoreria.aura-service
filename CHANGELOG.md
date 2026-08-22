@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.2] - 2026-08-22
+
+### fix
+- Corregido nombre de paso en `deploy-develop.yml` y `deploy-staging.yml`: "Deploy tesoreria core service" → "Deploy tesoreria aura service"
+
+### docs
+- Añadidos badges de tecnología en README (Java, Spring Boot, Maven, Docker, Kafka, Consul, GitHub Actions, SonarCloud)
+
 ## [0.0.1] - 2026-08-22
 
 ### feat
