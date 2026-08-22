@@ -1,0 +1,143 @@
+name: Generate Documentation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: read
+  pull-requests: read
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Generate Dependency Tree
+        run: mvn dependency:tree -DoutputFile=docs/dependency-tree.txt
+
+      - name: Validate Mermaid diagrams
+        run: |
+          mkdir -p /tmp/mermaid-output
+          printf '%s\n' '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
+          npx --yes @mermaid-js/mermaid-cli@11.12.0 --version
+          npx --yes puppeteer browsers install chrome-headless-shell
+          for diagram in docs/*.mmd; do
+            output="/tmp/mermaid-output/$(basename "$diagram" .mmd).svg"
+            npx --yes @mermaid-js/mermaid-cli@11.12.0 -p /tmp/puppeteer-config.json -i "$diagram" -o "$output"
+          done
+
+      - name: Fetch GitHub Data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          fetch_all_pages() {
+            local url="$1"
+            local output="$2"
+            local auth="$3"
+            echo "[]" > "$output"
+            while [ -n "$url" ] && [ "$url" != "null" ]; do
+              response=$(curl -s -D /tmp/headers.txt -H "Authorization: token $auth" "$url")
+              tmp=$(mktemp)
+              if echo "$response" | jq -e 'type == "array"' > /dev/null 2>&1; then
+                jq -s '.[0] + .[1]' "$output" <(echo "$response") > "$tmp" && mv "$tmp" "$output"
+              else
+                echo "Warning: API returned non-array response (possibly rate limit or auth error)"
+                echo "$response" | jq . > /tmp/api_error.json 2>/dev/null || echo "$response" > /tmp/api_error.json
+                cat /tmp/api_error.json
+                break
+              fi
+              # A response without a next page has no Link header. Do not let
+              # grep's exit code terminate the step because bash uses -e.
+              url=$(grep -i '^link:' /tmp/headers.txt | grep -oP '<[^>]+>; rel="next"' | grep -oP '<\K[^>]+' || true)
+            done
+          }
+
+          fetch_all_pages "https://api.github.com/repos/${{ github.repository }}/milestones?state=all&per_page=100" "docs/milestones.json" "$GITHUB_TOKEN"
+          fetch_all_pages "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100" "docs/issues.json" "$GITHUB_TOKEN"
+          fetch_all_pages "https://api.github.com/repos/${{ github.repository }}/pulls?state=all&per_page=100" "docs/prs.json" "$GITHUB_TOKEN"
+
+          echo "Fetched $(jq length docs/issues.json) issues, $(jq length docs/prs.json) PRs, $(jq length docs/milestones.json) milestones"
+
+      - name: Generate Wiki Content
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          git clone https://github.com/${{ github.repository }}.wiki.git wiki || {
+              mkdir wiki
+              cd wiki
+              git init
+              git remote add origin https://github.com/${{ github.repository }}.wiki.git
+              git checkout -b master
+              cd ..
+          }
+          
+          cd wiki
+          
+          # Create a simple Home.md as a portal
+          cat > Home.md << EOF
+          # 📋 Wiki del Proyecto UM.tesoreria.core-service
+
+          Esta wiki sirve como un portal de acceso rápido a los recursos más importantes del proyecto.
+
+          Toda la **documentación detallada, interactiva y actualizada** se encuentra en nuestro sitio de **GitHub Pages**.
+
+          ## ➡️ [Acceder a la Documentación Principal](https://$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]').github.io/$(echo ${{ github.repository }} | cut -d'/' -f2)/)
+
+          ---
+
+          ### Accesos Directos a GitHub
+
+          *   **[Issues](https://github.com/${{ github.repository }}/issues)**: Ver todos los issues, abiertos y cerrados.
+          *   **[Pull Requests](https://github.com/${{ github.repository }}/pulls)**: Ver todos los Pull Requests.
+          *   **[Milestones](https://github.com/${{ github.repository }}/milestones)**: Ver el progreso de los hitos del proyecto.
+          EOF
+
+          # Clean up old, now-unused wiki pages
+          rm -f "Estado-del-Proyecto.md" "Pull-Requests.md"
+
+          git add .
+          git commit -m "Update wiki to act as a portal to the main documentation" || echo "No changes to commit"
+          
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]] || [[ "${{ github.event_name }}" == "push" ]]; then
+            git push --set-upstream https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git master
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy-pages:
+    needs: generate-docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
