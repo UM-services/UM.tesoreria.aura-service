@@ -1,0 +1,187 @@
+---
+title: "Diagrama de Clases - Modulo Checkout"
+---
+classDiagram
+    direction TB
+
+    namespace domain_model {
+        class CheckoutLink {
+            -Long chequeraCuotaId
+            -UUID reservaVacanteId
+            -String cpe
+            -String debtId
+            -String checkoutLink
+            -String orderUid
+            -BigDecimal amount
+            -LocalDate dueDate
+            -String reference
+            -OffsetDateTime generatedAt
+            -String status
+        }
+
+        class CheckoutDebtInfo {
+            -String cuit
+            -String convenioId
+            -String cpe
+            -String debtId
+            -BigDecimal amount
+            -LocalDate dueDate
+        }
+    }
+
+    namespace domain_ports {
+        class GenerateCheckoutLinkUseCase {
+            <<interface>>
+            +generate(CheckoutLink) CheckoutLink
+            +generateBulk(List~CheckoutLink~) List~CheckoutLink~
+        }
+
+        class AuraCheckoutPort {
+            <<interface>>
+            +requestCheckoutLink(String cpe, String debtId) CheckoutLink
+        }
+    }
+
+    namespace application {
+        class CheckoutService {
+            -GenerateCheckoutLinkUseCase generateCheckoutLinkUseCase
+            +generateCheckout(CheckoutLink) CheckoutLink
+            +generateCheckoutBulk(List~CheckoutLink~) List~CheckoutLink~
+        }
+
+        class GenerateCheckoutLinkUseCaseImpl {
+            -AuraCheckoutPort auraCheckoutPort
+            +generate(CheckoutLink) CheckoutLink
+            +generateBulk(List~CheckoutLink~) List~CheckoutLink~
+        }
+
+        class CheckoutException {
+            -String errorCode
+            -int httpStatus
+            +CheckoutException(String, String, int)
+            +CheckoutException(String)
+        }
+    }
+
+    namespace infrastructure_web {
+        class CheckoutController {
+            -CheckoutService checkoutService
+            -CheckoutDtoMapper checkoutDtoMapper
+            +generateCheckoutLink(GenerateCheckoutRequest) ResponseEntity~GenerateCheckoutResponse~
+            +generateCheckoutLinksBulk(List~GenerateCheckoutRequest~) ResponseEntity~List~GenerateCheckoutResponse~~
+        }
+
+        class CheckoutDtoMapper {
+            +toDomain(GenerateCheckoutRequest) CheckoutLink
+            +toResponse(CheckoutLink) GenerateCheckoutResponse
+        }
+
+        class GenerateCheckoutRequest {
+            -Long chequeraCuotaId
+            -UUID reservaVacanteId
+            -String cpe
+            -String debtId
+        }
+
+        class GenerateCheckoutResponse {
+            -Long chequeraCuotaId
+            -UUID reservaVacanteId
+            -String cpe
+            -String debtId
+            -String checkoutLink
+            -String orderUid
+            -BigDecimal amount
+            -LocalDate dueDate
+            -String reference
+            -OffsetDateTime generatedAt
+            -String status
+        }
+    }
+
+    namespace infrastructure_client {
+        class AuraCheckoutAdapter {
+            -AuraCheckoutFeignClient checkoutFeignClient
+            -AuraTokenService tokenService
+            -ObjectMapper objectMapper
+            +requestCheckoutLink(String cpe, String debtId) CheckoutLink
+        }
+
+        class AuraTokenService {
+            -AuraAuthFeignClient authFeignClient
+            -AuraProperties auraProperties
+            -String cachedToken
+            -Instant tokenExpiration
+            +getValidToken() String
+        }
+
+        class AuraCheckoutFeignClient {
+            <<interface>>
+            +generateCheckoutLink(String, String, AuraCheckoutApiRequest) AuraCheckoutApiResponse
+        }
+
+        class AuraAuthFeignClient {
+            <<interface>>
+            +getAccessToken(Map~String, ?~) AuraTokenResponse
+        }
+
+        class AuraCheckoutApiRequest {
+            -String debtId
+        }
+
+        class AuraCheckoutApiResponse {
+            -String checkoutLink
+            -String orderUid
+            -DebtDetail debt
+            -String reference
+            -OffsetDateTime generatedAt
+        }
+
+        class DebtDetail {
+            -String cuit
+            -String convenioId
+            -String cpe
+            -String debtId
+            -BigDecimal amount
+            -LocalDate dueDate
+        }
+
+        class AuraErrorResponse {
+            -String code
+            -String message
+        }
+
+        class AuraTokenResponse {
+            -String accessToken
+            -Long expiresIn
+        }
+    }
+
+    namespace configuration {
+        class AuraProperties {
+            -String baseUrl
+            -String clientId
+            -String clientSecret
+        }
+    }
+
+    CheckoutController --> CheckoutService
+    CheckoutController --> CheckoutDtoMapper
+    CheckoutDtoMapper --> GenerateCheckoutRequest
+    CheckoutDtoMapper --> GenerateCheckoutResponse
+    CheckoutDtoMapper --> CheckoutLink
+    CheckoutService --> GenerateCheckoutLinkUseCase
+    GenerateCheckoutLinkUseCaseImpl ..|> GenerateCheckoutLinkUseCase
+    GenerateCheckoutLinkUseCaseImpl --> AuraCheckoutPort
+    GenerateCheckoutLinkUseCaseImpl --> CheckoutLink
+    AuraCheckoutAdapter ..|> AuraCheckoutPort
+    AuraCheckoutAdapter --> AuraCheckoutFeignClient
+    AuraCheckoutAdapter --> AuraTokenService
+    AuraCheckoutAdapter --> AuraCheckoutApiRequest
+    AuraCheckoutAdapter --> AuraCheckoutApiResponse
+    AuraCheckoutAdapter --> AuraErrorResponse
+    AuraCheckoutAdapter ..> CheckoutException
+    AuraTokenService --> AuraAuthFeignClient
+    AuraTokenService --> AuraProperties
+    AuraTokenService --> AuraTokenResponse
+    AuraCheckoutApiResponse *-- DebtDetail
+    CheckoutException --|> RuntimeException

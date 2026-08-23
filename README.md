@@ -28,6 +28,30 @@ Servicio Spring Boot 4.1.0 (Java 25) del módulo Aura de Tesoreria UM.
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/tesoreria/aura/hello/` | Hello World |
+| POST | `/api/tesoreria/aura/checkout/generate` | Generar checkout link individual |
+| POST | `/api/tesoreria/aura/checkout/generate-bulk` | Generar checkout links masivamente |
+
+## Arquitectura
+
+El módulo **checkout** sigue el patrón de **Arquitectura Hexagonal** (Ports & Adapters):
+
+| Capa | Responsabilidad |
+|------|----------------|
+| **Domain** | Modelos (`CheckoutLink`, `CheckoutDebtInfo`) y puertos (`GenerateCheckoutLinkUseCase`, `AuraCheckoutPort`) |
+| **Application** | Servicios (`CheckoutService`) e implementación de casos de uso (`GenerateCheckoutLinkUseCaseImpl`) |
+| **Infrastructure - Web** | Controller REST, DTOs de entrada/salida y mapper |
+| **Infrastructure - Client** | Adapter hacia Aura GIRE API via OpenFeign, servicio de tokens OAuth2 |
+
+### Diagramas
+
+Los diagramas Mermaid se encuentran en [`docs/`](docs/) y son validados automáticamente por el workflow `generate-docs.yml`:
+
+| Diagrama | Archivo | Descripción |
+|----------|---------|-------------|
+| Arquitectura Hexagonal | [`hexagonal-architecture.mmd`](docs/hexagonal-architecture.mmd) | Capas y dependencias del módulo checkout |
+| Secuencia de Checkout | [`checkout-sequence.mmd`](docs/checkout-sequence.mmd) | Flujo de generación de checkout link |
+| Diagrama de Clases | [`class-diagram.mmd`](docs/class-diagram.mmd) | Modelos, puertos, adaptadores y DTOs |
+| Contexto del Sistema | [`system-context.mmd`](docs/system-context.mmd) | Servicio Aura y sistemas externos |
 
 ## Configuración
 
