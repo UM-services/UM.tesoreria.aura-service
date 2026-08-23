@@ -1,0 +1,66 @@
+---
+title: "Arquitectura Hexagonal - Modulo Checkout"
+---
+flowchart TD
+    subgraph Driving["Driving Adapters - Web"]
+        CTRL["CheckoutController"]
+        MAPPER["CheckoutDtoMapper"]
+        REQ_DTO["GenerateCheckoutRequest"]
+        RES_DTO["GenerateCheckoutResponse"]
+    end
+
+    subgraph Application["Application Layer"]
+        SVC["CheckoutService"]
+        UC_IMPL["GenerateCheckoutLinkUseCaseImpl"]
+        EX["CheckoutException"]
+    end
+
+    subgraph Domain["Domain Layer"]
+        MODEL["CheckoutLink"]
+        DEBT_INFO["CheckoutDebtInfo"]
+        PORT_IN["GenerateCheckoutLinkUseCase"]
+        PORT_OUT["AuraCheckoutPort"]
+    end
+
+    subgraph Driven["Driven Adapters - Client"]
+        ADAPTER["AuraCheckoutAdapter"]
+        TOKEN_SVC["AuraTokenService"]
+        FEIGN_CHECKOUT["AuraCheckoutFeignClient"]
+        FEIGN_AUTH["AuraAuthFeignClient"]
+        API_REQ["AuraCheckoutApiRequest"]
+        API_RES["AuraCheckoutApiResponse"]
+        ERR_RES["AuraErrorResponse"]
+        TOKEN_RES["AuraTokenResponse"]
+    end
+
+    subgraph External["External Systems"]
+        AURA_GIRE["Aura GIRE API"]
+    end
+
+    CTRL --> MAPPER
+    CTRL --> SVC
+    MAPPER --> REQ_DTO
+    MAPPER --> RES_DTO
+    MAPPER --> MODEL
+    SVC --> PORT_IN
+    UC_IMPL -.implements.-> PORT_IN
+    UC_IMPL --> PORT_OUT
+    UC_IMPL --> MODEL
+    ADAPTER -.implements.-> PORT_OUT
+    ADAPTER --> FEIGN_CHECKOUT
+    ADAPTER --> TOKEN_SVC
+    ADAPTER --> EX
+    TOKEN_SVC --> FEIGN_AUTH
+    TOKEN_SVC --> AURA_GIRE
+    FEIGN_CHECKOUT --> AURA_GIRE
+    FEIGN_AUTH --> AURA_GIRE
+    ADAPTER --> API_REQ
+    ADAPTER --> API_RES
+    ADAPTER --> ERR_RES
+    TOKEN_SVC --> TOKEN_RES
+
+    style Domain fill:#e3f2fd,stroke:#1565c0
+    style Application fill:#f3e5f5,stroke:#7b1fa2
+    style Driving fill:#e8f5e9,stroke:#2e7d32
+    style Driven fill:#fff3e0,stroke:#e65100
+    style External fill:#fce4ec,stroke:#c62828

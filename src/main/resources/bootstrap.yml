@@ -8,6 +8,10 @@ app:
   swagger:
     username: ${APP_SWAGGER_USERNAME:tesoreria}
     password: ${APP_SWAGGER_PASSWORD:tesoreria}
+  aura:
+    base-url: ${APP_AURA_BASE_URL:https://services-dev.api.gire.com/aura/homologacion}
+    client-id: ${APP_AURA_CLIENT_ID:}
+    client-secret: ${APP_AURA_CLIENT_SECRET:}
 
 server:
   port: ${app.port}
@@ -22,6 +26,12 @@ spring:
       discovery:
         prefer-ip-address: true
         tags: tesoreria,aura
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 10000
+            readTimeout: 30000
   kafka:
     bootstrap-servers: kafka:9092
     producer:
