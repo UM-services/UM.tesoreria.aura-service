@@ -1,0 +1,42 @@
+---
+title: "Contexto del Sistema - UM Tesoreria Aura Service"
+---
+flowchart TD
+    subgraph Boundary["UM Tesoreria Aura Service"]
+        AURA_SVC["tesoreria-aura-service<br/>Spring Boot 4.1.0 / Java 25<br/>Puerto 8098"]
+    end
+
+    subgraph External_Systems["Sistemas Externos"]
+        AURA_GIRE["Aura GIRE API<br/>services-dev.api.gire.com<br/>Generacion de checkout links"]
+        CONSUL["Consul<br/>Service Discovery<br/>Puerto 8500"]
+        KAFKA["Apache Kafka<br/>Message Broker<br/>Puerto 9092"]
+    end
+
+    subgraph Consumers["Consumidores"]
+        CLIENT["Cliente HTTP<br/>Frontend / Otros microservicios"]
+        SWAGGER["Swagger UI<br/>HTTP Basic Auth"]
+        ACTUATOR["Spring Actuator<br/>health, scheduledtasks, env"]
+    end
+
+    subgraph CI_CD["CI/CD"]
+        GH_ACTIONS["GitHub Actions<br/>Build + SonarCloud + Docker"]
+        DOCKER["Docker Registry<br/>Imagen multi-stage JRE 25 Alpine"]
+    end
+
+    CLIENT -->|"POST /api/tesoreria/aura/checkout/generate"| AURA_SVC
+    CLIENT -->|"POST /api/tesoreria/aura/checkout/generate-bulk"| AURA_SVC
+    CLIENT -->|"GET /api/tesoreria/aura/hello/"| AURA_SVC
+    SWAGGER -->|"/swagger-ui.html"| AURA_SVC
+    ACTUATOR -->|"/actuator/*"| AURA_SVC
+
+    AURA_SVC -->|"OAuth2 + REST (OpenFeign)"| AURA_GIRE
+    AURA_SVC -->|"Registro y descubrimiento"| CONSUL
+    AURA_SVC -->|"Productor de eventos"| KAFKA
+
+    GH_ACTIONS -->|"Build y push"| DOCKER
+    DOCKER -->|"Deploy"| AURA_SVC
+
+    style Boundary fill:#e3f2fd,stroke:#1565c0
+    style External_Systems fill:#fff3e0,stroke:#e65100
+    style Consumers fill:#e8f5e9,stroke:#2e7d32
+    style CI_CD fill:#f3e5f5,stroke:#7b1fa2
