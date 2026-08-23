@@ -1,0 +1,69 @@
+---
+title: "Secuencia - Generacion de Checkout Link"
+---
+sequenceDiagram
+    autonumber
+    actor Client as Cliente HTTP
+    participant Ctrl as CheckoutController
+    participant Mapper as CheckoutDtoMapper
+    participant Svc as CheckoutService
+    participant UC as GenerateCheckoutLinkUseCaseImpl
+    participant Adapter as AuraCheckoutAdapter
+    participant TokenSvc as AuraTokenService
+    participant AuthFeign as AuraAuthFeignClient
+    participant CheckoutFeign as AuraCheckoutFeignClient
+    participant Aura as Aura GIRE API
+
+    Client->>Ctrl: POST /checkout/generate (GenerateCheckoutRequest)
+    activate Ctrl
+    Ctrl->>Mapper: toDomain(request)
+    Mapper-->>Ctrl: CheckoutLink (domain)
+    Ctrl->>Svc: generateCheckout(checkoutLink)
+    activate Svc
+    Svc->>UC: generate(checkoutLink)
+    activate UC
+    UC->>Adapter: requestCheckoutLink(cpe, debtId)
+    activate Adapter
+
+    Adapter->>TokenSvc: getValidToken()
+    activate TokenSvc
+    alt Token cacheado valido
+        TokenSvc-->>Adapter: cachedToken
+    else Token expirado o nulo
+        TokenSvc->>AuthFeign: getAccessToken(form)
+        activate AuthFeign
+        AuthFeign->>Aura: POST /oauth-aura/oauth2/token
+        Aura-->>AuthFeign: AuraTokenResponse
+        AuthFeign-->>TokenSvc: AuraTokenResponse
+        deactivate AuthFeign
+        TokenSvc-->>Adapter: newAccessToken
+    end
+    deactivate TokenSvc
+
+    Adapter->>CheckoutFeign: generateCheckoutLink(bearer, cpe, request)
+    activate CheckoutFeign
+    CheckoutFeign->>Aura: POST /aura-api/v0/checkout-links/cpe/{cpe}
+
+    alt Respuesta exitosa
+        Aura-->>CheckoutFeign: AuraCheckoutApiResponse
+        CheckoutFeign-->>Adapter: AuraCheckoutApiResponse
+        Adapter->>Adapter: mapToDomain(cpe, debtId, response)
+        Adapter-->>UC: CheckoutLink (status=GENERATED)
+    else FeignException (error de API)
+        Aura-->>CheckoutFeign: HTTP Error
+        CheckoutFeign-->>Adapter: FeignException
+        Adapter->>Adapter: Parse AuraErrorResponse
+        Adapter-->>UC: throw CheckoutException(errorCode, httpStatus)
+    end
+    deactivate CheckoutFeign
+    deactivate Adapter
+
+    UC->>UC: set chequeraCuotaId, reservaVacanteId
+    UC-->>Svc: CheckoutLink (result)
+    deactivate UC
+    Svc-->>Ctrl: CheckoutLink
+    deactivate Svc
+    Ctrl->>Mapper: toResponse(checkoutLink)
+    Mapper-->>Ctrl: GenerateCheckoutResponse
+    Ctrl-->>Client: 200 OK (GenerateCheckoutResponse)
+    deactivate Ctrl
