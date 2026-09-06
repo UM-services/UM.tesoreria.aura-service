@@ -12,6 +12,11 @@ app:
     base-url: ${APP_AURA_BASE_URL:https://services-dev.api.gire.com/aura/homologacion}
     client-id: ${APP_AURA_CLIENT_ID:}
     client-secret: ${APP_AURA_CLIENT_SECRET:}
+    scheduler:
+      cron: ${APP_AURA_SCHEDULER_CRON:0 */15 * * * *}
+      cron-nightly: ${APP_AURA_SCHEDULER_CRON_NIGHTLY:0 0 2 * * *}
+    kafka:
+      topic: ${APP_AURA_KAFKA_TOPIC:aura-payments-topic}
 
 server:
   port: ${app.port}
