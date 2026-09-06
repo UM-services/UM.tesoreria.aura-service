@@ -3,11 +3,13 @@ title: "Contexto del Sistema - UM Tesoreria Aura Service"
 ---
 flowchart TD
     subgraph Boundary["UM Tesoreria Aura Service"]
-        AURA_SVC["tesoreria-aura-service<br/>Spring Boot 4.1.0 / Java 25<br/>Puerto 8098"]
+        AURA_SVC["tesoreria-aura-service<br/>Spring Boot 4.1.1 / Java 25<br/>Puerto 8098"]
+        SCHED["AuraCobranzasScheduled<br/>Polling online cada 15 min<br/>Polling nightly 02:00"]
     end
 
     subgraph External_Systems["Sistemas Externos"]
-        AURA_GIRE["Aura GIRE API<br/>services-dev.api.gire.com<br/>Generacion de checkout links"]
+        AURA_GIRE["Aura GIRE API<br/>services-dev.api.gire.com<br/>Checkout links y cobranzas"]
+        CORE["tesoreria-core-service<br/>Convenios Aura activos"]
         CONSUL["Consul<br/>Service Discovery<br/>Puerto 8500"]
         KAFKA["Apache Kafka<br/>Message Broker<br/>Puerto 9092"]
     end
@@ -29,9 +31,11 @@ flowchart TD
     SWAGGER -->|"/swagger-ui.html"| AURA_SVC
     ACTUATOR -->|"/actuator/*"| AURA_SVC
 
-    AURA_SVC -->|"OAuth2 + REST (OpenFeign)"| AURA_GIRE
+    SCHED -->|"dispara polling de cobranzas"| AURA_SVC
+    AURA_SVC -->|"OAuth2 + REST (OpenFeign) checkout y cobranzas"| AURA_GIRE
+    AURA_SVC -->|"GET /api/tesoreria/core/aura/convenio/active"| CORE
     AURA_SVC -->|"Registro y descubrimiento"| CONSUL
-    AURA_SVC -->|"Productor de eventos"| KAFKA
+    AURA_SVC -->|"Productor AuraPaymentProcessedEvent"| KAFKA
 
     GH_ACTIONS -->|"Build y push"| DOCKER
     DOCKER -->|"Deploy"| AURA_SVC
