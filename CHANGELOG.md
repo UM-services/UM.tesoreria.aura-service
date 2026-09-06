@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1] - 2026-09-06
+
+### deps
+- Dependencia Kafka migrada de `org.springframework.kafka:spring-kafka` a `org.springframework.boot:spring-boot-starter-kafka` (4.1.1), según la convención de starters de Spring Boot 4; `spring-kafka` se sigue resolviendo de forma transitiva vía `spring-boot-kafka`
+
 ## [0.1.0] - 2026-09-06
 
 ### feat

@@ -9,7 +9,7 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blueviolet)
 ![SonarCloud](https://img.shields.io/badge/SonarCloud-quality%20gate-yellow)
 
-**Versión:** 0.1.0
+**Versión:** 0.1.1
 
 Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.
 
