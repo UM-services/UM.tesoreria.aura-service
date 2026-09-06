@@ -32,7 +32,7 @@ jobs:
       - name: Generate Dependency Tree
         run: mvn dependency:tree -DoutputFile=docs/dependency-tree.txt
 
-      - name: Validate Mermaid diagrams
+      - name: Validate and Generate Mermaid diagrams
         run: |
           mkdir -p /tmp/mermaid-output
           printf '%s\n' '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
@@ -41,6 +41,7 @@ jobs:
           for diagram in docs/*.mmd; do
             output="/tmp/mermaid-output/$(basename "$diagram" .mmd).svg"
             npx --yes @mermaid-js/mermaid-cli@11.12.0 -p /tmp/puppeteer-config.json -i "$diagram" -o "$output"
+            cp "$output" "docs/$(basename "$output")"
           done
 
       - name: Fetch GitHub Data
@@ -121,6 +122,164 @@ jobs:
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]] || [[ "${{ github.event_name }}" == "push" ]]; then
             git push --set-upstream https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git master
           fi
+
+      - name: Generate HTML documentation
+        run: |
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>UM.tesoreria.aura-service - Documentación</title>
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+                  h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+                  h2 { color: #34495e; margin-top: 30px; }
+                  .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                  .diagram { text-align: center; margin: 20px 0; }
+                  .diagram img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; }
+                  .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
+                  .link-card { background: #3498db; color: white; padding: 15px; border-radius: 6px; text-decoration: none; text-align: center; transition: background 0.3s; }
+                  .link-card:hover { background: #2980b9; }
+                  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                  th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                  th { background: #3498db; color: white; }
+                  tr:hover { background: #f5f5f5; }
+                  code { background: #ecf0f1; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+              </style>
+          </head>
+          <body>
+              <h1>📚 UM.tesoreria.aura-service</h1>
+              <div class="card">
+                  <p><strong>Versión:</strong> 0.1.0</p>
+                  <p><strong>Descripción:</strong> Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.</p>
+              </div>
+
+              <div class="links">
+                  <a href="https://github.com/${{ github.repository }}" class="link-card">📦 Repositorio</a>
+                  <a href="https://github.com/${{ github.repository }}/issues" class="link-card">🐛 Issues</a>
+                  <a href="https://github.com/${{ github.repository }}/pulls" class="link-card">🔀 Pull Requests</a>
+                  <a href="https://github.com/${{ github.repository }}/wiki" class="link-card">📖 Wiki</a>
+              </div>
+
+              <div class="card">
+                  <h2>🏗️ Arquitectura Hexagonal</h2>
+                  <div class="diagram">
+                      <img src="hexagonal-architecture.svg" alt="Arquitectura Hexagonal">
+                  </div>
+              </div>
+
+              <div class="card">
+                  <h2>🔄 Secuencia de Checkout</h2>
+                  <div class="diagram">
+                      <img src="checkout-sequence.svg" alt="Secuencia de Checkout">
+                  </div>
+              </div>
+
+              <div class="card">
+                  <h2>🔁 Polling de Cobranzas</h2>
+                  <div class="diagram">
+                      <img src="cobranza-sequence.svg" alt="Secuencia de Cobranzas">
+                  </div>
+              </div>
+
+              <div class="card">
+                  <h2>📊 Diagrama de Clases</h2>
+                  <div class="diagram">
+                      <img src="class-diagram.svg" alt="Diagrama de Clases">
+                  </div>
+              </div>
+
+              <div class="card">
+                  <h2>🌐 Contexto del Sistema</h2>
+                  <div class="diagram">
+                      <img src="system-context.svg" alt="Contexto del Sistema">
+                  </div>
+              </div>
+
+              <div class="card">
+                  <h2>📡 Endpoints</h2>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>Método</th>
+                              <th>Ruta</th>
+                              <th>Descripción</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <td>GET</td>
+                              <td><code>/api/tesoreria/aura/hello/</code></td>
+                              <td>Hello World</td>
+                          </tr>
+                          <tr>
+                              <td>POST</td>
+                              <td><code>/api/tesoreria/aura/checkout/generate</code></td>
+                              <td>Generar checkout link individual</td>
+                          </tr>
+                          <tr>
+                              <td>POST</td>
+                              <td><code>/api/tesoreria/aura/checkout/generate-bulk</code></td>
+                              <td>Generar checkout links masivamente</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+
+              <div class="card">
+                  <h2>⚙️ Configuración</h2>
+                  <p><strong>Puerto por defecto:</strong> <code>8098</code> (variable <code>APP_PORT</code>)</p>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>Variable</th>
+                              <th>Default</th>
+                              <th>Descripción</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <td><code>APP_PORT</code></td>
+                              <td>8098</td>
+                              <td>Puerto del servicio</td>
+                          </tr>
+                          <tr>
+                              <td><code>APP_SWAGGER_USERNAME</code></td>
+                              <td>tesoreria</td>
+                              <td>Usuario Swagger UI</td>
+                          </tr>
+                          <tr>
+                              <td><code>APP_SWAGGER_PASSWORD</code></td>
+                              <td>tesoreria</td>
+                              <td>Contraseña Swagger UI</td>
+                          </tr>
+                          <tr>
+                              <td><code>APP_AURA_SCHEDULER_CRON</code></td>
+                              <td>0 */15 * * * *</td>
+                              <td>Cron polling cobranzas online (día en curso)</td>
+                          </tr>
+                          <tr>
+                              <td><code>APP_AURA_SCHEDULER_CRON_NIGHTLY</code></td>
+                              <td>0 0 2 * * *</td>
+                              <td>Cron polling cobranzas batch (día anterior)</td>
+                          </tr>
+                          <tr>
+                              <td><code>APP_AURA_KAFKA_TOPIC</code></td>
+                              <td>aura-payments-topic</td>
+                              <td>Topic Kafka de eventos de pago</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+
+              <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #7f8c8d;">
+                  <p>Generado automáticamente por GitHub Actions</p>
+              </footer>
+          </body>
+          </html>
+          EOF
 
       - name: Upload artifacts
         uses: actions/upload-pages-artifact@v3
