@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.2] - 2026-10-18
+
+### ci
+- `deploy-staging.yml`: el job `deploy` usa una matriz de entornos (`staging`, `staging-new`) con `fail-fast: false`; cada ejecución corre en el runner self-hosted del entorno (`[self-hosted, linux, <entorno>]`) y el nombre del job lo refleja (`Deploy staging service (<entorno>)`)
+
+### fix
+- `generate-docs.yml`: corregido el nombre del proyecto en la wiki generada ("UM.tesoreria.core-service" → "UM.tesoreria.aura-service")
+
+### docs
+- `generate-docs.yml`: la versión mostrada en la página de GitHub Pages generada se sincroniza con la del servicio (`0.1.0` → `0.1.2`)
+
 ## [0.1.1] - 2026-09-06
 
 ### deps
