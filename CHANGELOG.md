@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.1.2] - 2026-10-18
+
+### ci
+- `deploy-staging.yml`: el job `deploy` usa una matriz de entornos (`staging`, `staging-new`) con `fail-fast: false`; cada ejecución corre en el runner self-hosted del entorno (`[self-hosted, linux, <entorno>]`) y el nombre del job lo refleja (`Deploy staging service (<entorno>)`)
+
+### fix
+- `generate-docs.yml`: corregido el nombre del proyecto en la wiki generada ("UM.tesoreria.core-service" → "UM.tesoreria.aura-service")
+
+### docs
+- `generate-docs.yml`: la versión mostrada en la página de GitHub Pages generada se sincroniza con la del servicio (`0.1.0` → `0.1.2`)
+
+## [0.1.1] - 2026-09-06
+
+### deps
+- Dependencia Kafka migrada de `org.springframework.kafka:spring-kafka` a `org.springframework.boot:spring-boot-starter-kafka` (4.1.1), según la convención de starters de Spring Boot 4; `spring-kafka` se sigue resolviendo de forma transitiva vía `spring-boot-kafka`
+
+## [0.1.0] - 2026-09-06
+
+### feat
+- Nuevo módulo **cobranza** con arquitectura hexagonal: polling automático de cobranzas (pagos) de Aura
+- `AuraCobranzasScheduled`: polling online cada 15 minutos del día en curso (`0 */15 * * * *`) y nightly a las 02:00 del día anterior para canales batch (`0 0 2 * * *`)
+- `PollCobranzasUseCaseImpl`: obtiene convenios activos de tesoreria-core, consulta cobranzas por convenio en la Aura GIRE API y publica los pagos
+- Adapter `AuraCoreConvenioAdapter` via OpenFeign contra `tesoreria-core-service` (`GET /api/tesoreria/core/aura/convenio/active`)
+- Adapter `AuraCobranzasAdapter` via OpenFeign (`GET /aura-api/v0/cobranzas`) reutilizando el token OAuth2 de `AuraTokenService`
+- `AuraPaymentKafkaProducer`: publica `AuraPaymentProcessedEvent` en Kafka con clave `cpe_debtId` (topic default `aura-payments-topic`)
+- Nuevas variables de entorno en `bootstrap.yml`: `APP_AURA_SCHEDULER_CRON`, `APP_AURA_SCHEDULER_CRON_NIGHTLY`, `APP_AURA_KAFKA_TOPIC`
+
+### deps
+- Spring Boot parent: 4.1.0 → 4.1.1
+- Spring Cloud: 2025.1.2 → 2025.1.3
+
+### ci
+- `generate-docs.yml`: los SVG generados se copian a `docs/` y se genera `index.html` para GitHub Pages
+
+### test
+- `KafkaTestConfig` con `KafkaTemplate` mockeado para el contexto de pruebas
+
 ## [0.0.2] - 2026-08-22
 
 ### fix
