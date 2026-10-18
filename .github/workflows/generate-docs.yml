@@ -96,7 +96,7 @@ jobs:
           
           # Create a simple Home.md as a portal
           cat > Home.md << EOF
-          # 📋 Wiki del Proyecto UM.tesoreria.core-service
+          # 📋 Wiki del Proyecto UM.tesoreria.aura-service
 
           Esta wiki sirve como un portal de acceso rápido a los recursos más importantes del proyecto.
 
@@ -152,7 +152,7 @@ jobs:
           <body>
               <h1>📚 UM.tesoreria.aura-service</h1>
               <div class="card">
-                  <p><strong>Versión:</strong> 0.1.0</p>
+                  <p><strong>Versión:</strong> 0.1.2</p>
                   <p><strong>Descripción:</strong> Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.</p>
               </div>
 

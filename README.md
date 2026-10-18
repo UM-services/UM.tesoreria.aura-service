@@ -9,7 +9,7 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blueviolet)
 ![SonarCloud](https://img.shields.io/badge/SonarCloud-quality%20gate-yellow)
 
-**Versión:** 0.1.1
+**Versión:** 0.1.2
 
 Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.
 
@@ -80,5 +80,5 @@ Variables de entorno principales:
 |----------|---------|-------------|
 | `maven.yml` | push/PR a `main` | Build + SonarCloud + imagen Docker |
 | `deploy-develop.yml` | push/PR a `develop` | Deploy a entorno develop |
-| `deploy-staging.yml` | push/PR a `staging` | Deploy a entorno staging |
+| `deploy-staging.yml` | push/PR a `staging` | Deploy a entornos `staging` y `staging-new` (matriz) |
 | `generate-docs.yml` | PRs + push a `main` | Documentación + GitHub Pages |
