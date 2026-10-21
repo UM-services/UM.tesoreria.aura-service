@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3] - 2026-10-21
+
+### fix
+- `bootstrap.yml`: el health check de Consul ahora consulta `/actuator/health/readiness` (`health-check-path`) y poda la instancia tras 5 minutos en estado crítico (`health-check-critical-timeout: 5m`)
+
+### docs
+- `generate-docs.yml`: la versión mostrada en la página de GitHub Pages generada se sincroniza con la del servicio (`0.1.2` → `0.1.3`)
+
 ## [0.1.2] - 2026-10-18
 
 ### ci
