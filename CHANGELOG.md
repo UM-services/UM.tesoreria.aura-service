@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.4] - 2026-10-23
+
+### feat
+- `KafkaProducerConfig` define explícitamente `ProducerFactory` y `KafkaTemplate` de `aura-payments-topic` con `StringSerializer` para la clave y `JacksonJsonSerializer` sin type info para el valor; `KafkaProducerConfigTest` verifica que el evento se serializa como JSON sin cabecera `__TypeId__`
+
+### changed
+- `aura-payments-topic` deja de emitir `__TypeId__`: el contrato es el JSON del evento. Se eliminaron los serializers de `spring.kafka.producer` del `bootstrap.yml` (los define la configuración explícita) y el `KafkaTestConfig` mock de tests, que ya no era necesario
+- `bootstrap.yml`: Consul discovery con `query-passing: true` para resolver solo instancias con los checks en passing (Feign/LoadBalancer)
+
+### deps
+- Spring Boot parent: 4.1.1 → 4.1.2
+- Spring Cloud: 2025.1.3 → 2025.1.4
+- springdoc-openapi-starter-webmvc-ui: 3.0.3 → 3.1.1
+- jacoco-maven-plugin: 0.8.13 → 0.8.15
+
+### docs
+- `generate-docs.yml`: la versión y la versión de Spring Boot mostradas en la página de GitHub Pages generada se sincronizan con el servicio (0.1.3 → 0.1.4, Spring Boot 4.1.1 → 4.1.2)
+
 ## [0.1.3] - 2026-10-21
 
 ### fix

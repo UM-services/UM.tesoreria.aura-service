@@ -1,7 +1,7 @@
 # UM.tesoreria.aura-service
 
 ![Java](https://img.shields.io/badge/Java-25-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-green)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-green)
 ![Maven](https://img.shields.io/badge/Maven-build-blue)
 ![Docker](https://img.shields.io/badge/Docker-multi--stage-blue)
 ![Kafka](https://img.shields.io/badge/Kafka-producer-black)
@@ -9,9 +9,9 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blueviolet)
 ![SonarCloud](https://img.shields.io/badge/SonarCloud-quality%20gate-yellow)
 
-**Versión:** 0.1.3
+**Versión:** 0.1.4
 
-Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.
+Servicio Spring Boot 4.1.2 (Java 25) del módulo Aura de Tesoreria UM.
 
 ## Características
 
