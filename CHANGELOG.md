@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0] - 2026-10-27
+
+### feat
+- `KafkaTopicsConfiguration` declara `aura-payments-topic` como bean `NewTopic`; Spring Boot lo crea al arrancar mediante el `KafkaAdmin` auto-configurado (el servicio es dueño del topic porque solo lo produce)
+- Particiones y replication factor del topic son configurables por entorno y `min.insync.replicas` se ajusta a `min(2, réplicas)`, de modo que un broker único sigue siendo válido
+
+### changed
+- `bootstrap.yml`: nuevas variables `APP_KAFKA_TOPIC_PARTITIONS` y `APP_KAFKA_TOPIC_REPLICAS` (default `1`) bajo `app.kafka.topics`
+
+### test
+- `KafkaTopicsConfigurationTest` verifica nombre, particiones, replication factor y `min.insync.replicas` con 1 y 3 réplicas
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.0; README documenta la creación automática del topic y las nuevas variables de entorno
+
 ## [0.1.4] - 2026-10-23
 
 ### feat
