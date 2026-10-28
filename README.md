@@ -9,7 +9,7 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blueviolet)
 ![SonarCloud](https://img.shields.io/badge/SonarCloud-quality%20gate-yellow)
 
-**Versión:** 0.2.0
+**Versión:** 0.2.1
 
 Servicio Spring Boot 4.1.2 (Java 25) del módulo Aura de Tesoreria UM.
 
@@ -76,6 +76,7 @@ Variables de entorno principales:
 | `APP_AURA_KAFKA_TOPIC` | `aura-payments-topic` | Topic Kafka de eventos de pago |
 | `APP_KAFKA_TOPIC_PARTITIONS` | `1` | Particiones del topic creado al arrancar |
 | `APP_KAFKA_TOPIC_REPLICAS` | `1` | Replication factor del topic; `min.insync.replicas` se fija a `min(2, réplicas)` |
+| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | Brokers Kafka (`spring.kafka.bootstrap-servers`) |
 
 ## CI/CD
 
