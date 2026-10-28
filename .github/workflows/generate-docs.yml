@@ -152,7 +152,7 @@ jobs:
           <body>
               <h1>📚 UM.tesoreria.aura-service</h1>
               <div class="card">
-                  <p><strong>Versión:</strong> 0.2.0</p>
+                  <p><strong>Versión:</strong> 0.2.1</p>
                   <p><strong>Descripción:</strong> Servicio Spring Boot 4.1.2 (Java 25) del módulo Aura de Tesoreria UM.</p>
               </div>
 
@@ -279,6 +279,11 @@ jobs:
                               <td><code>APP_KAFKA_TOPIC_REPLICAS</code></td>
                               <td>1</td>
                               <td>Replication factor del topic; <code>min.insync.replicas</code> se fija a <code>min(2, réplicas)</code></td>
+                          </tr>
+                          <tr>
+                              <td><code>SPRING_KAFKA_BOOTSTRAP_SERVERS</code></td>
+                              <td>kafka:9092</td>
+                              <td>Brokers Kafka (<code>spring.kafka.bootstrap-servers</code>)</td>
                           </tr>
                       </tbody>
                   </table>

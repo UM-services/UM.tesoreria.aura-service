@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.1] - 2026-10-28
+
+### fix
+- `KafkaProducerConfig`: se eliminaron `KEY_SERIALIZER_CLASS_CONFIG` y `VALUE_SERIALIZER_CLASS_CONFIG` de las properties del `ProducerFactory`; los serializers se pasan como instancias a `DefaultKafkaProducerFactory` (`StringSerializer` y `JacksonJsonSerializer` sin type info), evitando la doble configuración de serializers
+- `bootstrap.yml`: `spring.kafka.bootstrap-servers` se puede sobreescribir con la variable `SPRING_KAFKA_BOOTSTRAP_SERVERS` (default `kafka:9092`)
+
+### changed
+- `bootstrap.yml`: `spring.kafka.admin.fail-fast: true` y `modify-topic-configs: true`, de modo que el arranque falla si no puede administrar el topic y se aplican sus configuraciones (`min.insync.replicas`) también sobre un topic existente
+
+### test
+- `AuraApplicationTests`: el exclude de auto-configuración apunta a `org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration` (paquete de Boot 4); el nombre anterior se ignoraba en silencio. Se quitó la propiedad inexistente `spring.kafka.enabled`
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.1; se documenta `SPRING_KAFKA_BOOTSTRAP_SERVERS`
+
 ## [0.2.0] - 2026-10-27
 
 ### feat
