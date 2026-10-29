@@ -1,7 +1,7 @@
 # UM.tesoreria.aura-service
 
 ![Java](https://img.shields.io/badge/Java-25-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-green)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-green)
 ![Maven](https://img.shields.io/badge/Maven-build-blue)
 ![Docker](https://img.shields.io/badge/Docker-multi--stage-blue)
 ![Kafka](https://img.shields.io/badge/Kafka-producer-black)
@@ -9,9 +9,9 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blueviolet)
 ![SonarCloud](https://img.shields.io/badge/SonarCloud-quality%20gate-yellow)
 
-**Versión:** 0.1.3
+**Versión:** 0.2.1
 
-Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.
+Servicio Spring Boot 4.1.2 (Java 25) del módulo Aura de Tesoreria UM.
 
 ## Características
 
@@ -20,6 +20,7 @@ Servicio Spring Boot 4.1.1 (Java 25) del módulo Aura de Tesoreria UM.
 - Generación de checkout links contra la Aura GIRE API (módulo **checkout**)
 - Polling programado de cobranzas de Aura y publicación de eventos de pago a Kafka (módulo **cobranza**)
 - Productor Kafka (`AuraPaymentProcessedEvent`, topic `aura-payments-topic`)
+- Creación automática del topic `aura-payments-topic` al arrancar (`KafkaTopicsConfiguration`, vía `NewTopic`/`KafkaAdmin`), con particiones y replication factor configurables
 - Swagger UI protegido con HTTP Basic
 - Actuator (health, scheduledtasks, env)
 - Cache Caffeine
@@ -73,6 +74,9 @@ Variables de entorno principales:
 | `APP_AURA_SCHEDULER_CRON` | `0 */15 * * * *` | Cron polling cobranzas online (día en curso) |
 | `APP_AURA_SCHEDULER_CRON_NIGHTLY` | `0 0 2 * * *` | Cron polling cobranzas batch (día anterior) |
 | `APP_AURA_KAFKA_TOPIC` | `aura-payments-topic` | Topic Kafka de eventos de pago |
+| `APP_KAFKA_TOPIC_PARTITIONS` | `1` | Particiones del topic creado al arrancar |
+| `APP_KAFKA_TOPIC_REPLICAS` | `1` | Replication factor del topic; `min.insync.replicas` se fija a `min(2, réplicas)` |
+| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | Brokers Kafka (`spring.kafka.bootstrap-servers`) |
 
 ## CI/CD
 

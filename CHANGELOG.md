@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.2.1] - 2026-10-28
+
+### fix
+- `KafkaProducerConfig`: se eliminaron `KEY_SERIALIZER_CLASS_CONFIG` y `VALUE_SERIALIZER_CLASS_CONFIG` de las properties del `ProducerFactory`; los serializers se pasan como instancias a `DefaultKafkaProducerFactory` (`StringSerializer` y `JacksonJsonSerializer` sin type info), evitando la doble configuración de serializers
+- `bootstrap.yml`: `spring.kafka.bootstrap-servers` se puede sobreescribir con la variable `SPRING_KAFKA_BOOTSTRAP_SERVERS` (default `kafka:9092`)
+
+### changed
+- `bootstrap.yml`: `spring.kafka.admin.fail-fast: true` y `modify-topic-configs: true`, de modo que el arranque falla si no puede administrar el topic y se aplican sus configuraciones (`min.insync.replicas`) también sobre un topic existente
+
+### test
+- `AuraApplicationTests`: el exclude de auto-configuración apunta a `org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration` (paquete de Boot 4); el nombre anterior se ignoraba en silencio. Se quitó la propiedad inexistente `spring.kafka.enabled`
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.1; se documenta `SPRING_KAFKA_BOOTSTRAP_SERVERS`
+
+## [0.2.0] - 2026-10-27
+
+### feat
+- `KafkaTopicsConfiguration` declara `aura-payments-topic` como bean `NewTopic`; Spring Boot lo crea al arrancar mediante el `KafkaAdmin` auto-configurado (el servicio es dueño del topic porque solo lo produce)
+- Particiones y replication factor del topic son configurables por entorno y `min.insync.replicas` se ajusta a `min(2, réplicas)`, de modo que un broker único sigue siendo válido
+
+### changed
+- `bootstrap.yml`: nuevas variables `APP_KAFKA_TOPIC_PARTITIONS` y `APP_KAFKA_TOPIC_REPLICAS` (default `1`) bajo `app.kafka.topics`
+
+### test
+- `KafkaTopicsConfigurationTest` verifica nombre, particiones, replication factor y `min.insync.replicas` con 1 y 3 réplicas
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.0; README documenta la creación automática del topic y las nuevas variables de entorno
+
+## [0.1.4] - 2026-10-23
+
+### feat
+- `KafkaProducerConfig` define explícitamente `ProducerFactory` y `KafkaTemplate` de `aura-payments-topic` con `StringSerializer` para la clave y `JacksonJsonSerializer` sin type info para el valor; `KafkaProducerConfigTest` verifica que el evento se serializa como JSON sin cabecera `__TypeId__`
+
+### changed
+- `aura-payments-topic` deja de emitir `__TypeId__`: el contrato es el JSON del evento. Se eliminaron los serializers de `spring.kafka.producer` del `bootstrap.yml` (los define la configuración explícita) y el `KafkaTestConfig` mock de tests, que ya no era necesario
+- `bootstrap.yml`: Consul discovery con `query-passing: true` para resolver solo instancias con los checks en passing (Feign/LoadBalancer)
+
+### deps
+- Spring Boot parent: 4.1.1 → 4.1.2
+- Spring Cloud: 2025.1.3 → 2025.1.4
+- springdoc-openapi-starter-webmvc-ui: 3.0.3 → 3.1.1
+- jacoco-maven-plugin: 0.8.13 → 0.8.15
+
+### docs
+- `generate-docs.yml`: la versión y la versión de Spring Boot mostradas en la página de GitHub Pages generada se sincronizan con el servicio (0.1.3 → 0.1.4, Spring Boot 4.1.1 → 4.1.2)
+
 ## [0.1.3] - 2026-10-21
 
 ### fix
