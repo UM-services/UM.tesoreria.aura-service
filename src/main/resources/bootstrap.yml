@@ -2,6 +2,11 @@ app:
   port: ${APP_PORT:8098}
   logging: DEBUG
   name: tesoreria-aura-service
+  # Topics de los que este servicio es dueño (KafkaTopicsConfiguration).
+  kafka:
+    topics:
+      replicas: ${APP_KAFKA_TOPIC_REPLICAS:1}
+      partitions: ${APP_KAFKA_TOPIC_PARTITIONS:1}
   consul:
     host: consul-service
     port: 8500
@@ -12,6 +17,11 @@ app:
     base-url: ${APP_AURA_BASE_URL:https://services-dev.api.gire.com/aura/homologacion}
     client-id: ${APP_AURA_CLIENT_ID:}
     client-secret: ${APP_AURA_CLIENT_SECRET:}
+    scheduler:
+      cron: ${APP_AURA_SCHEDULER_CRON:0 */15 * * * *}
+      cron-nightly: ${APP_AURA_SCHEDULER_CRON_NIGHTLY:0 0 2 * * *}
+    kafka:
+      topic: ${APP_AURA_KAFKA_TOPIC:aura-payments-topic}
 
 server:
   port: ${app.port}
@@ -25,6 +35,11 @@ spring:
       port: ${app.consul.port}
       discovery:
         prefer-ip-address: true
+        # Solo resolver instancias con los checks en passing (Feign/LoadBalancer).
+        query-passing: true
+        # Consul: readiness (sin dependencias) + poda si queda critico.
+        health-check-path: /actuator/health/readiness
+        health-check-critical-timeout: 5m
         tags: tesoreria,aura
     openfeign:
       client:
@@ -33,10 +48,10 @@ spring:
             connectTimeout: 10000
             readTimeout: 30000
   kafka:
-    bootstrap-servers: kafka:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    admin:
+      fail-fast: true
+      modify-topic-configs: true
 
 logging:
   level:

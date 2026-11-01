@@ -1,0 +1,53 @@
+---
+title: "Secuencia - Polling de Cobranzas Aura"
+---
+sequenceDiagram
+    autonumber
+    participant Sched as AuraCobranzasScheduled
+    participant Svc as CobranzasService
+    participant UC as PollCobranzasUseCaseImpl
+    participant CoreAdapter as AuraCoreConvenioAdapter
+    participant Core as tesoreria-core-service
+    participant CobAdapter as AuraCobranzasAdapter
+    participant TokenSvc as AuraTokenService
+    participant Aura as Aura GIRE API
+    participant Prod as AuraPaymentKafkaProducer
+    participant Kafka as Apache Kafka
+
+    Sched->>Svc: executePolling(fechaDesde, fechaHasta)
+    activate Svc
+    Svc->>UC: pollCobranzas(fechaDesde, fechaHasta)
+    activate UC
+
+    UC->>CoreAdapter: findActiveConvenios()
+    activate CoreAdapter
+    CoreAdapter->>Core: GET /api/tesoreria/core/aura/convenio/active
+    Core-->>CoreAdapter: convenios activos (DTOs)
+    CoreAdapter-->>UC: lista de AuraConvenio
+    deactivate CoreAdapter
+
+    loop Por cada convenio activo
+        UC->>CobAdapter: fetchCobranzas(numeroConvenio, fechas)
+        activate CobAdapter
+        CobAdapter->>TokenSvc: getValidToken()
+        TokenSvc-->>CobAdapter: bearerToken
+        CobAdapter->>Aura: GET /aura-api/v0/cobranzas (nro_empresa, fechas)
+        alt Respuesta exitosa
+            Aura-->>CobAdapter: items de cobranzas
+            CobAdapter->>CobAdapter: mapear a Cobranza + rawPaymentJson
+            CobAdapter-->>UC: lista de Cobranza
+        else Error de API
+            Aura-->>CobAdapter: HTTP Error
+            CobAdapter-->>UC: throw RuntimeException (se registra y continua)
+        end
+        deactivate CobAdapter
+        UC->>Prod: publishPaymentEvent(cobranza)
+        activate Prod
+        Prod->>Kafka: send(aura-payments-topic, clave cpe_debtId, AuraPaymentProcessedEvent)
+        deactivate Prod
+    end
+
+    UC-->>Svc: totalProcessed
+    deactivate UC
+    Svc-->>Sched: totalProcessed
+    deactivate Svc

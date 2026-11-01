@@ -9,8 +9,9 @@ import org.springframework.test.context.TestPropertySource;
         "spring.cloud.consul.enabled=false",
         "spring.cloud.consul.discovery.enabled=false",
         "spring.cloud.consul.config.enabled=false",
-        "spring.kafka.enabled=false",
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration"
+        // En Boot 4 la auto-configuración vive en spring-boot-kafka y la clase cambió de paquete.
+        // El nombre viejo (org.springframework.boot.autoconfigure.kafka...) se ignora en silencio.
+        "spring.autoconfigure.exclude=org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration"
 })
 class AuraApplicationTests {
 

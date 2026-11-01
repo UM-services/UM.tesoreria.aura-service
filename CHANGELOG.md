@@ -1,5 +1,98 @@
 # Changelog
 
+## [0.2.1] - 2026-10-28
+
+### fix
+- `KafkaProducerConfig`: se eliminaron `KEY_SERIALIZER_CLASS_CONFIG` y `VALUE_SERIALIZER_CLASS_CONFIG` de las properties del `ProducerFactory`; los serializers se pasan como instancias a `DefaultKafkaProducerFactory` (`StringSerializer` y `JacksonJsonSerializer` sin type info), evitando la doble configuración de serializers
+- `bootstrap.yml`: `spring.kafka.bootstrap-servers` se puede sobreescribir con la variable `SPRING_KAFKA_BOOTSTRAP_SERVERS` (default `kafka:9092`)
+
+### changed
+- `bootstrap.yml`: `spring.kafka.admin.fail-fast: true` y `modify-topic-configs: true`, de modo que el arranque falla si no puede administrar el topic y se aplican sus configuraciones (`min.insync.replicas`) también sobre un topic existente
+
+### test
+- `AuraApplicationTests`: el exclude de auto-configuración apunta a `org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration` (paquete de Boot 4); el nombre anterior se ignoraba en silencio. Se quitó la propiedad inexistente `spring.kafka.enabled`
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.1; se documenta `SPRING_KAFKA_BOOTSTRAP_SERVERS`
+
+## [0.2.0] - 2026-10-27
+
+### feat
+- `KafkaTopicsConfiguration` declara `aura-payments-topic` como bean `NewTopic`; Spring Boot lo crea al arrancar mediante el `KafkaAdmin` auto-configurado (el servicio es dueño del topic porque solo lo produce)
+- Particiones y replication factor del topic son configurables por entorno y `min.insync.replicas` se ajusta a `min(2, réplicas)`, de modo que un broker único sigue siendo válido
+
+### changed
+- `bootstrap.yml`: nuevas variables `APP_KAFKA_TOPIC_PARTITIONS` y `APP_KAFKA_TOPIC_REPLICAS` (default `1`) bajo `app.kafka.topics`
+
+### test
+- `KafkaTopicsConfigurationTest` verifica nombre, particiones, replication factor y `min.insync.replicas` con 1 y 3 réplicas
+
+### docs
+- README y `generate-docs.yml` sincronizados con la versión 0.2.0; README documenta la creación automática del topic y las nuevas variables de entorno
+
+## [0.1.4] - 2026-10-23
+
+### feat
+- `KafkaProducerConfig` define explícitamente `ProducerFactory` y `KafkaTemplate` de `aura-payments-topic` con `StringSerializer` para la clave y `JacksonJsonSerializer` sin type info para el valor; `KafkaProducerConfigTest` verifica que el evento se serializa como JSON sin cabecera `__TypeId__`
+
+### changed
+- `aura-payments-topic` deja de emitir `__TypeId__`: el contrato es el JSON del evento. Se eliminaron los serializers de `spring.kafka.producer` del `bootstrap.yml` (los define la configuración explícita) y el `KafkaTestConfig` mock de tests, que ya no era necesario
+- `bootstrap.yml`: Consul discovery con `query-passing: true` para resolver solo instancias con los checks en passing (Feign/LoadBalancer)
+
+### deps
+- Spring Boot parent: 4.1.1 → 4.1.2
+- Spring Cloud: 2025.1.3 → 2025.1.4
+- springdoc-openapi-starter-webmvc-ui: 3.0.3 → 3.1.1
+- jacoco-maven-plugin: 0.8.13 → 0.8.15
+
+### docs
+- `generate-docs.yml`: la versión y la versión de Spring Boot mostradas en la página de GitHub Pages generada se sincronizan con el servicio (0.1.3 → 0.1.4, Spring Boot 4.1.1 → 4.1.2)
+
+## [0.1.3] - 2026-10-21
+
+### fix
+- `bootstrap.yml`: el health check de Consul ahora consulta `/actuator/health/readiness` (`health-check-path`) y poda la instancia tras 5 minutos en estado crítico (`health-check-critical-timeout: 5m`)
+
+### docs
+- `generate-docs.yml`: la versión mostrada en la página de GitHub Pages generada se sincroniza con la del servicio (`0.1.2` → `0.1.3`)
+
+## [0.1.2] - 2026-10-18
+
+### ci
+- `deploy-staging.yml`: el job `deploy` usa una matriz de entornos (`staging`, `staging-new`) con `fail-fast: false`; cada ejecución corre en el runner self-hosted del entorno (`[self-hosted, linux, <entorno>]`) y el nombre del job lo refleja (`Deploy staging service (<entorno>)`)
+
+### fix
+- `generate-docs.yml`: corregido el nombre del proyecto en la wiki generada ("UM.tesoreria.core-service" → "UM.tesoreria.aura-service")
+
+### docs
+- `generate-docs.yml`: la versión mostrada en la página de GitHub Pages generada se sincroniza con la del servicio (`0.1.0` → `0.1.2`)
+
+## [0.1.1] - 2026-09-06
+
+### deps
+- Dependencia Kafka migrada de `org.springframework.kafka:spring-kafka` a `org.springframework.boot:spring-boot-starter-kafka` (4.1.1), según la convención de starters de Spring Boot 4; `spring-kafka` se sigue resolviendo de forma transitiva vía `spring-boot-kafka`
+
+## [0.1.0] - 2026-09-06
+
+### feat
+- Nuevo módulo **cobranza** con arquitectura hexagonal: polling automático de cobranzas (pagos) de Aura
+- `AuraCobranzasScheduled`: polling online cada 15 minutos del día en curso (`0 */15 * * * *`) y nightly a las 02:00 del día anterior para canales batch (`0 0 2 * * *`)
+- `PollCobranzasUseCaseImpl`: obtiene convenios activos de tesoreria-core, consulta cobranzas por convenio en la Aura GIRE API y publica los pagos
+- Adapter `AuraCoreConvenioAdapter` via OpenFeign contra `tesoreria-core-service` (`GET /api/tesoreria/core/aura/convenio/active`)
+- Adapter `AuraCobranzasAdapter` via OpenFeign (`GET /aura-api/v0/cobranzas`) reutilizando el token OAuth2 de `AuraTokenService`
+- `AuraPaymentKafkaProducer`: publica `AuraPaymentProcessedEvent` en Kafka con clave `cpe_debtId` (topic default `aura-payments-topic`)
+- Nuevas variables de entorno en `bootstrap.yml`: `APP_AURA_SCHEDULER_CRON`, `APP_AURA_SCHEDULER_CRON_NIGHTLY`, `APP_AURA_KAFKA_TOPIC`
+
+### deps
+- Spring Boot parent: 4.1.0 → 4.1.1
+- Spring Cloud: 2025.1.2 → 2025.1.3
+
+### ci
+- `generate-docs.yml`: los SVG generados se copian a `docs/` y se genera `index.html` para GitHub Pages
+
+### test
+- `KafkaTestConfig` con `KafkaTemplate` mockeado para el contexto de pruebas
+
 ## [0.0.2] - 2026-08-22
 
 ### fix
